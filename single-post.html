@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Single Post</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header {
+            background: linear-gradient(to right, #7e22ce, #581c87);
+            color: white;
+            text-align: center;
+            padding: 1em;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2em auto;
+            padding: 1em;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .post-content {
+            margin-bottom: 2em;
+        }
+        .post-title {
+            font-size: 2rem;
+            color: #7e22ce;
+        }
+        .post-body {
+            margin-top: 1em;
+            line-height: 1.8;
+        }
+        .post-image {
+            width: 100%;
+            height: auto;
+            margin-bottom: 2em;
+            border-radius: 8px;
+        }
+        .comments-section {
+            margin-top: 2em;
+        }
+        .comments-section h2 {
+            font-size: 1.8rem;
+            color: #581c87;
+        }
+        .comment {
+            border-bottom: 1px solid #ddd;
+            padding: 1em 0;
+        }
+        .comment p {
+            margin: 0;
+        }
+        .comment-form {
+            margin-top: 2em;
+        }
+        .comment-form textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 1em;
+            padding: 0.5em;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .comment-form input[type="text"] {
+            width: 100%;
+            padding: 0.5em;
+            margin-bottom: 1em;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .comment-form button {
+            background: linear-gradient(to right, #7e22ce, #581c87);
+            color: white;
+            padding: 0.8em 1.2em;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+        }
+        .comment-form button:hover {
+            background: #581c87;
+        }
+        footer {
+            background-color: #7e22ce;
+            color: white;
+            text-align: center;
+            padding: 1em;
+            margin-top: 2em;
+        }
+        .join-button {
+            display: inline-block;
+            background-color: #581c87;
+            color: white;
+            padding: 0.8em 1.2em;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 1em;
+        }
+        .join-button:hover {
+            background-color: #7e22ce;
+        }
+        #copying {
+            color:orange
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Single Post</h1>
+    <a href="https://t.me/hulmiofficial" class="join-button">Join Us Now</a>
+</header>
+
+<div class="container">
+    <div id="post-content" class="post-content"></div>
+    <div class="comments-section">
+        <h2>Comments</h2>
+        <div id="comments-container"></div>
+    </div>
+    <div class="comment-form">
+        <h3>Leave a Comment</h3>
+        <input type="text" id="author" placeholder="Your Name" required>
+        <textarea id="comment" placeholder="Your Comment" required></textarea>
+        <button id="submit-comment">Submit Comment</button>
+    </div>
+    
+</div>
+
+<footer>
+    <p>&copy; 2024 <a id="copying" href="https://hulmitech.com">HULMI</a>. All rights reserved.</p>
+</footer>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('post_id');
+
+    function fetchSinglePost() {
+        fetch(`https://hulmitech.com/wp-json/wp/v2/posts/${postId}`)
+            .then(response => response.json())
+            .then(post => {
+                const postContent = document.getElementById('post-content');
+                if (post.featured_media) {
+                    fetch(`https://hulmitech.com/wp-json/wp/v2/media/${post.featured_media}`)
+                        .then(response => response.json())
+                        .then(media => {
+                            const imgElement = document.createElement('img');
+                            imgElement.src = media.source_url;
+                            imgElement.classList.add('post-image');
+                            postContent.insertBefore(imgElement, postContent.firstChild);
+                        })
+                        .catch(error => console.error('Error fetching featured image:', error));
+                }
+                postContent.innerHTML += `
+                    <h2 class="post-title">${post.title.rendered}</h2>
+                    <div class="post-body">${post.content.rendered}</div>
+                `;
+            })
+            .catch(error => console.error('Error fetching post:', error));
+    }
+
+    function fetchComments() {
+        fetch(`https://hulmitech.com/wp-json/wp/v2/comments?post=${postId}`)
+            .then(response => response.json())
+            .then(comments => {
+                const commentsContainer = document.getElementById('comments-container');
+                commentsContainer.innerHTML = '';
+                comments.forEach(comment => {
+                    const commentElement = document.createElement('div');
+                    commentElement.classList.add('comment');
+                    commentElement.innerHTML = `
+                        <p><strong>${comment.author_name}</strong></p>
+                        <p>${comment.content.rendered}</p>
+                    `;
+                    commentsContainer.appendChild(commentElement);
+                });
+            })
+            .catch(error => console.error('Error fetching comments:', error));
+    }
+
+    function postComment(author, content) {
+        const commentData = {
+            post: postId,
+            author_name: author,
+            content: content,
+        };
+        fetch('https://hulmitech.com/wp-json/wp/v2/comments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(commentData),
+        })
+        .then(response => {
+            if (response.ok) {
+                fetchComments();
+                alert('Comment submitted successfully!');
+            } else {
+                throw new Error('Error submitting comment');
+            }
+        })
+        .catch(error => {
+            console.error('Error posting comment:', error);
+            alert('Failed to submit the comment');
+        });
+    }
+
+    document.getElementById('submit-comment').addEventListener('click', function () {
+        const author = document.getElementById('author').value;
+        const content = document.getElementById('comment').value;
+        if (author && content) {
+            postComment(author, content);
+        } else {
+            alert('Please fill in both your name and comment');
+        }
+    });
+
+    fetchSinglePost();
+    fetchComments();
+</script>
+
+</body>
+</html>

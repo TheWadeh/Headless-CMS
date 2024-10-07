@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Headless WordPress Site</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header {
+            background: linear-gradient(to right, #7e22ce, #581c87);
+            color: white;
+            text-align: center;
+            padding: 1em;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2em auto;
+            padding: 1em;
+        }
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2em;
+        }
+        .post {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .post img {
+            max-width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+        .post-content {
+            padding: 1em;
+        }
+        .post h2 {
+            color: #7e22ce;
+            font-size: 1.5rem;
+        }
+        .post p {
+            line-height: 1.6;
+            max-height: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .read-more {
+            margin-top: auto;
+            text-align: center;
+            padding: 1em;
+            background: linear-gradient(to right, #7e22ce, #581c87);
+            color: white;
+            text-decoration: none;
+            display: block;
+            font-weight: bold;
+            border-top: 1px solid #ddd;
+        }
+        .read-more:hover {
+            background-color: #005b7f;
+        }
+        #read-more {
+            margin-top: 10px;
+            margin: auto;
+            text-align: center;
+            padding: 1em;
+            background: linear-gradient(to right, #7e22ce, #581c87);
+            color: white;
+            text-decoration: none;
+            display: block;
+            font-weight: bold;
+            border-radius: 30%;
+            border-top: 1px solid #ddd;
+        }
+        footer {
+            background-color: #7e22ce;
+            color: white;
+            text-align: center;
+            padding: 1em;
+            margin-top: 2em;
+        }
+        #copying {
+            color:orange;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>HulmiTech Bloga - AJ🫡</h1>
+    <p>Fetching posts from WordPress using REST API</p>
+    <p>Using WordPress as Headless CMS</p>
+    
+    <a href="https://t.me/hulmiofficial" target="_blank">
+        <button id="read-more">Join Us Now</button>
+    </a>
+</header>
+
+<div class="container">
+    <div class="posts-grid" id="posts-container">
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2024 <a id="copying" href="https://hulmitech.com">HULMI</a>. All rights reserved.</p>
+</footer>
+
+<script>
+    function fetchPosts() {
+        fetch('https://hulmitech.com/wp-json/wp/v2/posts')
+            .then(response => response.json())
+            .then(data => {
+                const postsContainer = document.getElementById('posts-container');
+
+                data.forEach(post => {
+                    const postElement = document.createElement('div');
+                    postElement.classList.add('post');
+
+                    if (post.featured_media !== 0) {
+                        fetch(`https://hulmitech.com/wp-json/wp/v2/media/${post.featured_media}`)
+                            .then(response => response.json())
+                            .then(media => {
+                                const imgElement = document.createElement('img');
+                                imgElement.src = media.source_url;
+                                postElement.insertBefore(imgElement, postElement.firstChild);
+                            })
+                            .catch(error => console.error('Error fetching featured image:', error));
+                    }
+
+                    const postContent = document.createElement('div');
+                    postContent.classList.add('post-content');
+
+                    postContent.innerHTML = `
+                        <h2>${post.title.rendered}</h2>
+                        <p>${post.excerpt.rendered}</p>
+                    `;
+
+                    postElement.appendChild(postContent);
+
+                    const readMoreLink = document.createElement('a');
+                    readMoreLink.classList.add('read-more');
+                    readMoreLink.href = `single-post.html?post_id=${post.id}`;
+                    readMoreLink.textContent = "Read More";
+                    postElement.appendChild(readMoreLink);
+
+                    postsContainer.appendChild(postElement);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching posts:', error);
+                const errorMessage = document.createElement('p');
+                errorMessage.textContent = 'Sorry, there was an error loading the posts.';
+                document.getElementById('posts-container').appendChild(errorMessage);
+            });
+    }
+
+    fetchPosts();
+</script>
+
+</body>
+</html>
